@@ -6,7 +6,7 @@
 %
 % OUTPUTS
 % - T_inv: approximate inverse of T
-%
+
 function T_inv = cholesky_approx(T)
     [n,m] = size(T);
     % argument validation

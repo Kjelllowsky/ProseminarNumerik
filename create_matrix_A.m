@@ -1,3 +1,6 @@
+% Proseminar Numerik WS24/25 | Kjell Machalowsky
+% Funktion zum Erstellen der Systemmatrix in verschiedenen Größen
+%
 % INPUT:
 % - n  Dimension von A
 %

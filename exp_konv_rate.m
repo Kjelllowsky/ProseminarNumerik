@@ -9,10 +9,22 @@
 %  - q:      experimentelle Konvergenzrate
 
 function q = exp_konv_rate(res)
-    % Normen der Differenzen berchnen
-    d1 = norm(res(end-1)-res(end),2);
-    d2 = norm(res(end-2)-res(end),2);
-    d3 = norm(res(end-3)-res(end),2);
+    n = length(res);
+
+    % Nomen der Diferenzen berchnen
+    d1_vec = zeros(n-3,1);
+    d2_vec = zeros(n-3,1);
+    d3_vec = zeros(n-3,1);
+    for k=4:n
+        d1_vec(k-3) = norm(res(k-1)-res(k),2);
+        d2_vec(k-3) = norm(res(k-2)-res(k),2);
+        d3_vec(k-3) = norm(res(k-3)-res(k),2);
+    end
+
+    % durchschnittliche Normen der Differenzen berchnen
+    d1 = mean(d1_vec);
+    d2 = mean(d2_vec);
+    d3 = mean(d3_vec);
 
     % experimentelle Konvergenzrate berchnen
     q = log(d2/d1) / log(d3/d2);

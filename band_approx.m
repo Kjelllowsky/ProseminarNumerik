@@ -1,12 +1,13 @@
-% Function to approximate the inverse of a tridiagonal matrix by
-% its sparsity.
+% Proseminar Numerik WS24/25 | Kjell Machalowsky
+% Funktion zur Approximation einer Tridiagonal-Inversen über deren
+% Bandstruktur.
 %
 % INPUTS
-%  - T: sym. tridiag. matrix, whose inverse is to be approximated
-%  - p: number of sub-diagonals
+%  - T: sym. tridiag. Matrix, deren Inverse bestimmt werden soll
+%  - p: Anzahl an Nebendiagonalen in der Approximation
 %
 % OUTPUTS
-%  - T_inv: approximate inverse of T
+%  - T_inv: approximierte Inverse von T
 %
 function T_inv = band_approx(T,p)
     [n,m] = size(T);
@@ -19,7 +20,7 @@ function T_inv = band_approx(T,p)
     u = 1;
     u = [u, a(1)/b(1)];
 
-    % approximation
+    % Approximation
     for i=3:n
         u(i) = (a(i-1)*u(i-1)-b(i-2)*u(i-2))/b(i-1);
     end

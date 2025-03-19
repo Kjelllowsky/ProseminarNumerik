@@ -1,3 +1,6 @@
+% Proseminar Numerik WS24/25 | Kjell Machalowsky
+% Funktion zum Erstellen der rechten Seite für das zu lösende LGS
+%
 % INPUTS
 %  - n:  Dimension von A
 %  - f:  Function-Handle der Störfunktion

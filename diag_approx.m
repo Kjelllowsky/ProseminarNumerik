@@ -1,11 +1,12 @@
-% Function to approximate the inverse of a tridiagonal matrix by
-% its diagonal inverse.
+% Proseminar Numerik WS24/25 | Kjell Machalowsky
+% Funktion zur Approximation einer Tridiagonal-Inversene über die Inverse
+% der Diagonalmatrix.
 %
 % INPUTS
-%  - T: sym. tridiag. matrix, whose inverse is to be approximated
+%  - T: sym. tridiag. Matrix deren Inverse approximiert werden soll
 %
 % OUTPUTS
-%  - T_inv: approximate inverse of T
+%  - T_inv: approximierte Inverse von T
 %
 function T_inv = diag_approx(T)
     [n,m] = size(T);

@@ -6,7 +6,7 @@
 %         ACHTUNG          %
 % Ausführung kann u. U.    %
 % mehrere Stunden brauchen %
-% (für Dim. bis 16384)     %
+% (für Dim. ab 1e5)        %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Dieses Skript vergleicht verschiedene Ansätze der Vorkonditionierung im 
@@ -19,21 +19,22 @@
 %   | b) Band-Approximation der tridiagonalen Inversen
 %   | c) Cholesky-Block-Zerlegung der tridiagonalen Inversen
 %   | d) Polynom-Approximation der tridiagonalen Inversen
+%   | e) Cholesky-Zerlegung mit Umsortierung und Nullsetzen
 
 %% Initialisierung
 tol = 1e-8;
 maxiter = 1e5;
-% getestete Diskretisierungen: 2,4,8,12,16,24,32,64,96,128
-dim_vec = [16,64,144,256,576,1024];
+% getestete Diskretisierungen: 2,4,8,12,16,24,32,64
+dim_vec = [4,16,64,144,256,576,1024,4096];
 % dim_vec = [16,64,144,256,576];
 % Störfunktion der Poisson-Gleichung
 rhs_fun = @(x,y) x^2+y^2;
 % Werte für Plots
-residual_mat = zeros(7,length(dim_vec));
-kappa_mat = zeros(7,length(dim_vec));
-kappa_mat_sca = zeros(7,length(dim_vec));
-iter_mat = zeros(7,length(dim_vec));
-konv_mat = zeros(7,length(dim_vec));
+residual_mat = zeros(8,length(dim_vec));
+kappa_mat = zeros(8,length(dim_vec));
+kappa_mat_sca = zeros(8,length(dim_vec));
+iter_mat = zeros(8,length(dim_vec));
+konv_mat = zeros(8,length(dim_vec));
 
 
 %% Test durchführen
@@ -123,6 +124,18 @@ for i=1:length(dim_vec)
     iter_mat(7,i) = length(res_IBCd);
     konv_mat(7,i) = exp_konv_rate(res_IBCd);
     disp("Fall 4d) fertig")
+
+    % 4 | IBC e) Cholesky-Zerlegung mit Umsortierung und Nullsetzen
+    tic;
+    [x_IBCe, res_IBCe, kappa_IBCe] = my_pcg(A,b,x0,tol,maxiter,@(C,g) incl_chol_cond(C,g,@(T) zero_cholesky_approx(T,1e-3),1e-3));
+    toc;
+    residual_mat(8,i) = res_IBCe(end);
+    kappa_mat(8,i) = kappa_IBCd;
+    kappa_mat_sca(8,i) = kappa_IBCe/kappa_A;
+    iter_mat(8,i) = length(res_IBCe);
+    konv_mat(8,i) = exp_konv_rate(res_IBCe);
+    disp("Fall 4e) fertig")
+
 end
 
 % Ergebnisse speichern
@@ -137,10 +150,15 @@ save("konv_mat.mat", "konv_mat")
 
 % optional: Matrizen laden
 residual_mat = load("residual_mat.mat");
+residual_mat = residual_mat.residual_mat;
 kappa_mat = load("kappa_mat.mat");
+kappa_mat = kappa_mat.kappa_mat;
 kappa_mat_sca = load("kappa_mat_sca.mat");
+kappa_mat_sca = kappa_mat_sca.kappa_mat_sca;
 iter_mat = load("iter_mat.mat");
+iter_mat = iter_mat.iter_mat;
 konv_mat = load("konv_mat.mat");
+konv_mat = konv_mat.konv_mat;
 
 % plot 1: Anzahl Iterationen über Dimension für verschiedene Verfahren
 fig1 = figure;
@@ -152,23 +170,18 @@ loglog(dim_vec,iter_mat(4,:), 'g-',Marker='x', DisplayName='IBC-DIAG')
 loglog(dim_vec,iter_mat(5,:), 'm-',Marker='square', DisplayName='IBC-BAND')
 loglog(dim_vec,iter_mat(6,:), 'c-',Marker='diamond', DisplayName='IBC-CHOL')
 loglog(dim_vec,iter_mat(7,:), '-',Color='#D95319', Marker='^', DisplayName='IBC-POLY')
+loglog(dim_vec,iter_mat(8,:), '-',Color='#A2142F', Marker='v', DisplayName='IBC-ZERO')
 hold off
 title('Benötigte Iterationen nach Systemgröße')
 xlabel('Systemgröße [-]')
 ylabel('Anzahl Iterationen [-]')
 xlim([0,dim_vec(end)*1.05])
 ylim([0,2*max(max(iter_mat))])
-legend(Location="northwest")
+legend(Location="northwest",NumColumns=2)
 
 
-% plot 2: Verlauf des Residuums über Iterationszahl für versch. Verfahren
-% plot 2a): CG-Verfahren
-% fig2a = figure;
-% semilogy
-
-
-% plot 3: Konvergenzrate über Systemgröße für verschiedene Verfahren
-fig3 = figure;
+% plot 2: Konvergenzrate über Systemgröße für verschiedene Verfahren
+fig2 = figure;
 semilogx(dim_vec,konv_mat(1,:), 'k-',Marker='o', DisplayName='CG-Verfahren')
 hold on
 semilogx(dim_vec,konv_mat(2,:), 'r-',Marker='+', DisplayName='DIAG')
@@ -177,17 +190,18 @@ semilogx(dim_vec,konv_mat(4,:), 'g-',Marker='x', DisplayName='IBC-DIAG')
 semilogx(dim_vec,konv_mat(5,:), 'm-',Marker='square', DisplayName='IBC-BAND')
 semilogx(dim_vec,konv_mat(6,:), 'c-',Marker='diamond', DisplayName='IBC-CHOL')
 semilogx(dim_vec,konv_mat(7,:), '-',Color='#D95319', Marker='^', DisplayName='IBC-POLY')
+semilogx(dim_vec,konv_mat(8,:), '-',Color='#A2142F', Marker='v', DisplayName='IBC-ZERO')
 hold off
 title('Konvergenzrate der Verfahren nach Systemgröße')
 xlabel('Systemgröße [-]')
 ylabel('Konvergenzrate [-]')
 xlim([0,dim_vec(end)*1.05])
-ylim([0,1.05*max(max(konv_mat))])
-legend(Location="northeast")
+ylim([0.5,2.5])
+legend(Location="northwest",NumColumns=2)
 
 
-% plot 4: Quotient der Kond.-zahlen über Systemgröße für versch. Verfahren
-fig4 = figure;
+% plot 3: Quotient der Kond.-zahlen über Systemgröße für versch. Verfahren
+fig3 = figure;
 loglog(dim_vec,kappa_mat_sca(1,:), 'k-',Marker='o', DisplayName='CG-Verfahren')
 hold on
 loglog(dim_vec,kappa_mat_sca(2,:), 'r-',Marker='+', DisplayName='DIAG')
@@ -196,12 +210,12 @@ loglog(dim_vec,kappa_mat_sca(4,:), 'g-',Marker='x', DisplayName='IBC-DIAG')
 loglog(dim_vec,kappa_mat_sca(5,:), 'm-',Marker='square', DisplayName='IBC-BAND')
 loglog(dim_vec,kappa_mat_sca(6,:), 'c-',Marker='diamond', DisplayName='IBC-CHOL')
 loglog(dim_vec,kappa_mat_sca(7,:), '-',Color='#D95319', Marker='^', DisplayName='IBC-POLY')
+loglog(dim_vec,kappa_mat_sca(8,:), '-',Color='#A2142F', Marker='v', DisplayName='IBC-ZERO')
 hold off
 title('Quotient der Konditionszahl nach Systemgröße')
 xlabel('Systemgröße [-]')
 ylabel('$\displaystyle \frac{\kappa(\tilde{A})}{\kappa(A)}$', 'Interpreter','latex')
 xlim([0,dim_vec(end)*1.05])
 ylim([0,2*max(max(kappa_mat_sca))])
-legend(Location="northwest")
-
+legend(Location="northeast",NumColumns=2)
 
